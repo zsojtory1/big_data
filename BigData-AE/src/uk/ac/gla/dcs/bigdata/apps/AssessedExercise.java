@@ -115,6 +115,18 @@ public class AssessedExercise {
 		PreprocessArticle preprocessArticleMap = new PreprocessArticle(broadcastTextPreprocessor);
 		Dataset<CleanedArticle> cleanedArticles = news.map(preprocessArticleMap, Encoders.bean(CleanedArticle.class));
 		
+		DocLengthMap docLenMap = new DocLengthMap();
+		Dataset<Integer> docLens = cleanedArticles.map(docLenMap, Encoders.INT());
+		
+		SumDocLengthReducer sumDocLength = new SumDocLengthReducer();
+		Integer totalDocLen = docLens.reduce(sumDocLength);
+		long docsCount = docLens.count();
+		
+		Double avgDocLen = ((double)totalDocLen)/ docsCount;
+	
+		DocTermsReducer docTermsReducer = new DocTermsReducer();
+		CleanedArticle corpus = cleanedArticles.reduce(docTermsReducer);
+		
 		//Placeholder dataset holding the RankedResults of each article for each query
 		Dataset<DocumentRanking> ranks = null;
 		
