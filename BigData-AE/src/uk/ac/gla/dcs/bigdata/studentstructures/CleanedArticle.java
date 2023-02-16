@@ -23,4 +23,11 @@ public class CleanedArticle implements Serializable {
 		this.docLength = docLength;
 	}
 	
+	public int getDocLength() {
+		return docLength;
+	}
+	
+	public Map<String,Integer> getTerms(){
+		return terms;
+	}
 }
