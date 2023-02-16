@@ -42,7 +42,7 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 		
 		List<String> terms = this.broadcastTextPreprocessor.value().process(text);
 		
-		Map<String,Integer> termsMap = new HashMap();
+		Map<String,Integer> termsMap = new HashMap<>();
 		for(String term: terms) {
 			if ( termsMap.containsKey(term) ) {
 				termsMap.put(term, termsMap.get(term) + 1);
