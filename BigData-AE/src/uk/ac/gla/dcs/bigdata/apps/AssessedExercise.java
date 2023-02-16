@@ -2,7 +2,11 @@ package uk.ac.gla.dcs.bigdata.apps;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
+
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
@@ -17,7 +21,9 @@ import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
-import uk.ac.gla.dcs.bigdata.studentfunctions.RemoveRedundancy;
+import uk.ac.gla.dcs.bigdata.studentfunctions.*;
+import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
+import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 /**
  * This is the main class where your Spark topology should be specified.
  * 
@@ -102,6 +108,12 @@ public class AssessedExercise {
 		//----------------------------------------------------------------
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
+		
+		TextPreProcessor textPreprocessor = new TextPreProcessor();
+		Broadcast<TextPreProcessor> broadcastTextPreprocessor = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(textPreprocessor);
+		
+		PreprocessArticle preprocessArticleMap = new PreprocessArticle(broadcastTextPreprocessor);
+		Dataset<CleanedArticle> cleanedArticles = news.map(preprocessArticleMap, Encoders.bean(CleanedArticle.class));
 		
 		//Placeholder dataset holding the RankedResults of each article for each query
 		Dataset<DocumentRanking> ranks = null;
