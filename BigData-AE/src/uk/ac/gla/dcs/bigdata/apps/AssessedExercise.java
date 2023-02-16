@@ -17,8 +17,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
-import uk.ac.gla.dcs.bigdata.studentfunctions.SortResults;
-
+import uk.ac.gla.dcs.bigdata.studentfunctions.RemoveRedundancy;
 /**
  * This is the main class where your Spark topology should be specified.
  * 
@@ -107,9 +106,9 @@ public class AssessedExercise {
 		//Placeholder dataset holding the RankedResults of each article for each query
 		Dataset<DocumentRanking> ranks = null;
 		
-		//Sort results in each DocumentRanking based on score with a 20 article limit
+		//Sort results in each DocumentRanking based on score with a 20 article limit, then remove redundant results with a 10 article limit
 		
-		Dataset<DocumentRanking> sortedRanks = ranks.map(new SortResults(), Encoders.bean(DocumentRanking.class));
+		Dataset<DocumentRanking> sortedRanks = ranks.map(new RemoveRedundancy(), Encoders.bean(DocumentRanking.class));
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
