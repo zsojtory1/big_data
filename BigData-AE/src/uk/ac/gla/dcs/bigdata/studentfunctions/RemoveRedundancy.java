@@ -20,13 +20,16 @@ public class RemoveRedundancy implements MapFunction<DocumentRanking, DocumentRa
     /**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -8988793745225677396L;
+
+	/**
+	 * 
+	 */
 
 	@Override
     public DocumentRanking call(DocumentRanking documentRanking) throws Exception {
         List<RankedResult> sortedResults = documentRanking.getResults().stream()
                 .sorted((result1, result2) -> Double.compare(result2.getScore(), (result1.getScore())))
-                .limit(20)
                 .collect(Collectors.toList());
         
         List<RankedResult> filteredResults = new ArrayList<>();

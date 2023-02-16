@@ -108,9 +108,13 @@ public class AssessedExercise {
 		
 		//Sort results in each DocumentRanking based on score with a 20 article limit, then remove redundant results with a 10 article limit
 		
-		Dataset<DocumentRanking> sortedRanks = ranks.map(new RemoveRedundancy(), Encoders.bean(DocumentRanking.class));
+		Dataset<DocumentRanking> reducedRanks = ranks.map(new RemoveRedundancy(), Encoders.bean(DocumentRanking.class));
 		
-		return null; // replace this with the the list of DocumentRanking output by your topology
+		//Collect document rankings as list
+		
+		List<DocumentRanking> reducedRanksList = reducedRanks.collectAsList();
+		
+		return reducedRanksList; // replace this with the the list of DocumentRanking output by your topology
 	}
 	
 	
