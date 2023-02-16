@@ -4,15 +4,20 @@ import java.io.File;
 import java.util.List;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.KeyValueGroupedDataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import scala.Tuple2;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
+import uk.ac.gla.dcs.bigdata.studentfunctions.SortResults;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -99,6 +104,12 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 		
+		//Placeholder dataset holding the RankedResults of each article for each query
+		Dataset<DocumentRanking> ranks = null;
+		
+		//Sort results in each DocumentRanking based on score with a 20 article limit
+		
+		Dataset<DocumentRanking> sortedRanks = ranks.map(new SortResults(), Encoders.bean(DocumentRanking.class));
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
