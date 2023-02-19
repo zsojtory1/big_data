@@ -15,15 +15,20 @@ import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
 public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticle>{
 
 	private static final long serialVersionUID = 6475166483071609772L;
+	private transient TextPreProcessor processor;
 	
-	Broadcast<TextPreProcessor> broadcastTextPreprocessor;
+//	Broadcast<TextPreProcessor> broadcastTextPreprocessor;
 	
-	public PreprocessArticle(Broadcast<TextPreProcessor> broadcastTextPreprocessor) {
-		this.broadcastTextPreprocessor = broadcastTextPreprocessor;
-	}
+	public PreprocessArticle() {}
+	
+//	public PreprocessArticle(Broadcast<TextPreProcessor> broadcastTextPreprocessor) {
+//		this.broadcastTextPreprocessor = broadcastTextPreprocessor;
+//	}
 
 	@Override
 	public CleanedArticle call(NewsArticle article) throws Exception {
+		
+		if (processor==null) processor = new TextPreProcessor();
 		
 		String text = article.getTitle();
 		if ( text == null ) {
@@ -32,6 +37,10 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 	
 		int count = 0;
 		for(ContentItem item: article.getContents()) {
+			if ( item == null ) {
+				continue;
+			}
+			
 			if ( count >= 5 ) {
 				break;
 			}
@@ -43,7 +52,7 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 			}
 		}
 		
-		List<String> terms = this.broadcastTextPreprocessor.value().process(text);
+		List<String> terms = processor.process(text);
 		
 		Map<String,Short> termsMap = new HashMap<>();
 		for(String term: terms) {

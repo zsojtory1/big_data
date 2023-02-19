@@ -37,14 +37,22 @@ public class RemoveRedundancy implements MapFunction<DocumentRanking, DocumentRa
         for (int i = 0; i < sortedResults.size(); i++) {
             boolean keep = true;
             RankedResult result1 = sortedResults.get(i);
-            for (int j = i + 1; j < sortedResults.size(); j++) {
-                RankedResult result2 = sortedResults.get(j);
-                if (TextDistanceCalculator.similarity(result1.getArticle().getTitle(), result2.getArticle().getTitle()) < 0.5) {
-                    if (result1.getScore() < result2.getScore()) {
-                        keep = false;
-                        break;
-                    }
-                }
+            String title1 = result1.getArticle().getTitle();
+            if ( title1 != null ) {
+	            for (int j = i + 1; j < sortedResults.size(); j++) {
+	                RankedResult result2 = sortedResults.get(j);
+	                String title2 = result2.getArticle().getTitle();
+	                if ( title2 == null ) {
+	                	continue;
+	                }
+	                
+	                if (TextDistanceCalculator.similarity(title1, title2) < 0.5) {
+	                    if (result1.getScore() < result2.getScore()) {
+	                        keep = false;
+	                        break;
+	                    }
+	                }
+	            }
             }
             if (keep) {
                 filteredResults.add(result1);

@@ -1,6 +1,8 @@
 target
 data
 bin
+results
+resources/hadoop
 .settings
 .classpath
 Notes.docx
