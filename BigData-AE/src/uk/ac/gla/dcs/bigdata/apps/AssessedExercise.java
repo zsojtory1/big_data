@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
@@ -23,6 +24,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.studentfunctions.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
+import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 /**
  * This is the main class where your Spark topology should be specified.
@@ -127,8 +129,19 @@ public class AssessedExercise {
 		DocTermsReducer docTermsReducer = new DocTermsReducer();
 		CleanedArticle corpus = cleanedArticles.reduce(docTermsReducer);
 		
+		Broadcast<List<Query>> broadcastQueries = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queries.collectAsList());
+		Broadcast<DPHScorer> broadcastScorer = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(new DPHScorer());
+		Broadcast<CleanedArticle> broadcastCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpus);
+		
+		RankFlatMap rankFlatMap = new RankFlatMap(broadcastQueries, broadcastScorer, broadcastCorpus, avgDocLen, docsCount);
+		Dataset<DocumentRanking> rankedDocs = cleanedArticles.flatMap(rankFlatMap, Encoders.bean(DocumentRanking.class));
+		KeyValueGroupedDataset<String,DocumentRanking> rankedDocsByQuery = rankedDocs.groupByKey(new DocumentRankingToQuery(), Encoders.STRING());
+		
+		Dataset<Tuple2<String, DocumentRanking>> ranksByQuery = rankedDocsByQuery.reduceGroups(new MergeDocRankingReducer());
+		
+		
 		//Placeholder dataset holding the RankedResults of each article for each query
-		Dataset<DocumentRanking> ranks = null;
+		Dataset<DocumentRanking> ranks = ranksByQuery.map(new QueryDocRankTupleToDocRank(), Encoders.bean(DocumentRanking.class));
 		
 		//Sort results in each DocumentRanking based on score with a 20 article limit, then remove redundant results with a 10 article limit
 		

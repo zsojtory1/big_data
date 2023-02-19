@@ -8,16 +8,16 @@ public class CleanedArticle implements Serializable {
 	
 	private static final long serialVersionUID = -2905684103776472843L;
 	
-	Map<String,Integer> terms;
+	Map<String,Short> terms;
 	NewsArticle article;
 	int docLength;
 
-	public CleanedArticle(NewsArticle article, Map<String,Integer> terms) {
+	public CleanedArticle(NewsArticle article, Map<String,Short> terms) {
 		this.terms = terms;
 		this.article = article;
 		
 		int docLength = 0;
-		for(Integer count: terms.values()) {
+		for(short count: terms.values()) {
 			docLength += count;
 		}
 		this.docLength = docLength;
@@ -27,7 +27,11 @@ public class CleanedArticle implements Serializable {
 		return docLength;
 	}
 	
-	public Map<String,Integer> getTerms(){
+	public Map<String,Short> getTerms(){
 		return terms;
+	}
+	
+	public NewsArticle getArticle() {
+		return article;
 	}
 }
