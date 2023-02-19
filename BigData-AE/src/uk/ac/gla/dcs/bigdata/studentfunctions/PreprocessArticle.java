@@ -26,6 +26,9 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 	public CleanedArticle call(NewsArticle article) throws Exception {
 		
 		String text = article.getTitle();
+		if ( text == null ) {
+			text = "";
+		}
 	
 		int count = 0;
 		for(ContentItem item: article.getContents()) {
@@ -42,13 +45,13 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 		
 		List<String> terms = this.broadcastTextPreprocessor.value().process(text);
 		
-		Map<String,Integer> termsMap = new HashMap<>();
+		Map<String,Short> termsMap = new HashMap<>();
 		for(String term: terms) {
 			if ( termsMap.containsKey(term) ) {
-				termsMap.put(term, termsMap.get(term) + 1);
+				termsMap.put(term, (short) (termsMap.get(term) + 1));
 			}
 			else {
-				termsMap.put(term, 1);
+				termsMap.put(term, (short) 1);
 			}
 		}
 		
