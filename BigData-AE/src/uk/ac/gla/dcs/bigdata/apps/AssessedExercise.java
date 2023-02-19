@@ -3,6 +3,7 @@ package uk.ac.gla.dcs.bigdata.apps;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -68,7 +69,7 @@ public class AssessedExercise {
 		
 		// Get the location of the input news articles
 		String newsFile = System.getenv("bigdata.news");
-		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+		if (newsFile==null) newsFile = "data/1000.json"; // default is a sample of 5000 news articles
 		
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
@@ -111,10 +112,7 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 		
-		TextPreProcessor textPreprocessor = new TextPreProcessor();
-		Broadcast<TextPreProcessor> broadcastTextPreprocessor = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(textPreprocessor);
-		
-		PreprocessArticle preprocessArticleMap = new PreprocessArticle(broadcastTextPreprocessor);
+		PreprocessArticle preprocessArticleMap = new PreprocessArticle();
 		Dataset<CleanedArticle> cleanedArticles = news.map(preprocessArticleMap, Encoders.bean(CleanedArticle.class));
 		
 		DocLengthMap docLenMap = new DocLengthMap();
@@ -129,11 +127,11 @@ public class AssessedExercise {
 		DocTermsReducer docTermsReducer = new DocTermsReducer();
 		CleanedArticle corpus = cleanedArticles.reduce(docTermsReducer);
 		
-		Broadcast<List<Query>> broadcastQueries = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queries.collectAsList());
-		Broadcast<DPHScorer> broadcastScorer = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(new DPHScorer());
+		List<Query> queriesList = queries.collectAsList();
+		Broadcast<List<Query>> broadcastQueries = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queriesList);
 		Broadcast<CleanedArticle> broadcastCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpus);
 		
-		RankFlatMap rankFlatMap = new RankFlatMap(broadcastQueries, broadcastScorer, broadcastCorpus, avgDocLen, docsCount);
+		RankFlatMap rankFlatMap = new RankFlatMap(broadcastQueries, broadcastCorpus, avgDocLen, docsCount);
 		Dataset<DocumentRanking> rankedDocs = cleanedArticles.flatMap(rankFlatMap, Encoders.bean(DocumentRanking.class));
 		KeyValueGroupedDataset<String,DocumentRanking> rankedDocsByQuery = rankedDocs.groupByKey(new DocumentRankingToQuery(), Encoders.STRING());
 		

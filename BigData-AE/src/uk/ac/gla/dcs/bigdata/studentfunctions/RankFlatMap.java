@@ -13,6 +13,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
+import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
 
 public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRanking> {
@@ -27,13 +28,11 @@ public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRank
 	
 	public RankFlatMap(
 			Broadcast<List<Query>> broadcastQueries, 
-			Broadcast<DPHScorer> broadcastScorer, 
 			Broadcast<CleanedArticle> broadcastCorpus, 
 			Double avgDocLen,
 			long docsCount
 			) {
 		this.broadcastQueries = broadcastQueries;
-		this.broadcastScorer = broadcastScorer;
 		this.broadcastCorpus = broadcastCorpus;
 		this.avgDocLen = avgDocLen;
 		this.docCount = docsCount;
@@ -43,7 +42,6 @@ public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRank
 	public Iterator<DocumentRanking> call(CleanedArticle cleanedArticle) throws Exception {
 		
 		List<Query> queries = this.broadcastQueries.value();
-		DPHScorer scorer = this.broadcastScorer.value();
 		CleanedArticle corpus = this.broadcastCorpus.value();
 		
 		Map<String,Short> corpusTermDict = corpus.getTerms();
@@ -66,8 +64,10 @@ public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRank
 					tfInCorpus = corpusTermDict.get(term);
 				}
 				
-				double score = scorer.getDPHScore(tfInDoc, tfInCorpus, cleanedArticle.getDocLength(), avgDocLen, docCount);
-				sumScore += score;
+				double score = DPHScorer.getDPHScore(tfInDoc, tfInCorpus, cleanedArticle.getDocLength(), avgDocLen, docCount);
+				if ( !Double.isNaN(score) ) {
+					sumScore += score;
+				}
 			}
 			
 			double avgScore = sumScore / terms.size();
