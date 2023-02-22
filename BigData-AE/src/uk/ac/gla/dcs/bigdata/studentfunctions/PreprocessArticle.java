@@ -19,7 +19,9 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 	
 //	Broadcast<TextPreProcessor> broadcastTextPreprocessor;
 	
-	public PreprocessArticle() {}
+	public PreprocessArticle() {
+		this.processor = new TextPreProcessor();
+	}
 	
 //	public PreprocessArticle(Broadcast<TextPreProcessor> broadcastTextPreprocessor) {
 //		this.broadcastTextPreprocessor = broadcastTextPreprocessor;
@@ -54,14 +56,10 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 		
 		List<String> terms = processor.process(text);
 		
+		//Create termsMap, mapping each term to its count in the article
 		Map<String,Short> termsMap = new HashMap<>();
 		for(String term: terms) {
-			if ( termsMap.containsKey(term) ) {
-				termsMap.put(term, (short) (termsMap.get(term) + 1));
-			}
-			else {
-				termsMap.put(term, (short) 1);
-			}
+		    termsMap.merge(term, (short) 1, (a, b) -> (short) (a + b));
 		}
 		
 		CleanedArticle cleanedArticle = new CleanedArticle(article, termsMap);

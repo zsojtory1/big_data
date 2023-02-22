@@ -12,7 +12,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 
 /**
- * Extracts the MetaCritic score for a game (SteamGameStats object)
+ * Removes redundant articles, keeping the one with the higher score
  * @author Zoltan
  *
  */
@@ -30,6 +30,7 @@ public class RemoveRedundancy implements MapFunction<DocumentRanking, DocumentRa
     public DocumentRanking call(DocumentRanking documentRanking) throws Exception {
         List<RankedResult> sortedResults = documentRanking.getResults().stream()
                 .sorted((result1, result2) -> Double.compare(result2.getScore(), (result1.getScore())))
+                .limit(20)
                 .collect(Collectors.toList());
         
         List<RankedResult> filteredResults = new ArrayList<>();
