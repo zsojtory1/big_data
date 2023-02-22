@@ -16,18 +16,14 @@ public class DocTermsReducer implements ReduceFunction<CleanedArticle> {
 		Map<String,Short> terms1 = a1.getTerms();
 		Map<String,Short> terms2 = a2.getTerms();
 		
-		Map<String,Short> terms3 = new HashMap<>();
+		//create combined map initially with the elements of terms1
+		Map<String,Short> terms3 = new HashMap<>(terms1);
 		
-		terms3.putAll(terms1);
-		
-		for(String term: terms2.keySet()) {
-			Short value = terms2.get(term);
-			if ( terms3.containsKey(term) ) {
-				terms3.put(term, (short) (terms3.get(term) + value));
-			}
-			else {
-				terms3.put(term, value);
-			}
+		//Combine terms1 and terms2 into terms3
+		for (Map.Entry<String, Short> entry : terms2.entrySet()) {
+		    String term = entry.getKey();
+		    Short value = entry.getValue();
+		    terms3.compute(term, (k, v) -> (v == null) ? value : (short)(v + value));
 		}
 		
 		CleanedArticle article = new CleanedArticle(null, terms3);

@@ -74,6 +74,7 @@ public class AssessedExercise {
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
 		
+		
 		// Close the spark session
 		spark.close();
 		
@@ -138,7 +139,7 @@ public class AssessedExercise {
 		Dataset<Tuple2<String, DocumentRanking>> ranksByQuery = rankedDocsByQuery.reduceGroups(new MergeDocRankingReducer());
 		
 		
-		//Placeholder dataset holding the RankedResults of each article for each query
+		//Dataset holding the unfiltered document rankings
 		Dataset<DocumentRanking> ranks = ranksByQuery.map(new QueryDocRankTupleToDocRank(), Encoders.bean(DocumentRanking.class));
 		
 		//Sort results in each DocumentRanking based on score with a 20 article limit, then remove redundant results with a 10 article limit
