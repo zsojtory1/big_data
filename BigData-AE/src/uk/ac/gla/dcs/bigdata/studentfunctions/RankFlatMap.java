@@ -16,6 +16,10 @@ import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
 
+/**
+ * @author zoltan
+ * Flat map function, calculating the scores for each cleaned article against each query, returning a document ranking.
+ */
 public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRanking> {
 	
 	private static final long serialVersionUID = 6475166483071609772L;
@@ -47,12 +51,15 @@ public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRank
 		Map<String,Short> corpusTermDict = corpus.getTerms();
 		Map<String,Short> docTermDict = cleanedArticle.getTerms();
 		
+		//create a list of rankings (one for each query)
 		List<DocumentRanking> rankings = new ArrayList<>(queries.size());
 		
+		//loop through each query, calculating the average scores between the all the terms in the query and the article through DPH
 		for(Query query: queries) {
 			List<String> terms = query.getQueryTerms();
 			
 			double sumScore = 0;
+			//check each term in both corpus and article document-term frequencies
 			for(int i=0; i<terms.size(); ++i) {
 				String term = terms.get(i);
 				short tfInDoc = 0;
@@ -64,23 +71,28 @@ public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRank
 					tfInCorpus = corpusTermDict.get(term);
 				}
 				
+				//calculate score using values from earlier in the pipeline
 				double score = DPHScorer.getDPHScore(tfInDoc, tfInCorpus, cleanedArticle.getDocLength(), avgDocLen, docCount);
 				if ( !Double.isNaN(score) ) {
 					sumScore += score;
 				}
 			}
 			
+			//calculate average and create ranked result objects
 			double avgScore = sumScore / terms.size();
 			NewsArticle article = cleanedArticle.getArticle();
 			RankedResult rankedResult = new RankedResult(article.getId(), article, avgScore);
 			
+			//store each ranked result
 			List<RankedResult> results = new ArrayList<RankedResult>();
 			results.add(rankedResult);
 			
+			//store each document ranking per query
 			DocumentRanking ranking = new DocumentRanking(query, results);
 			rankings.add(ranking);
 		}
 		
+		//return each document ranking
 		return rankings.iterator();
 	}
 	

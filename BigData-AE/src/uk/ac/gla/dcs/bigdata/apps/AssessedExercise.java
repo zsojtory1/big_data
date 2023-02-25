@@ -2,15 +2,11 @@ package uk.ac.gla.dcs.bigdata.apps;
 
 import java.io.File;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.KeyValueGroupedDataset;
 import org.apache.spark.sql.Row;
@@ -22,11 +18,8 @@ import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.studentfunctions.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
-import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 /**
  * This is the main class where your Spark topology should be specified.
  * 
@@ -113,33 +106,39 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 		
+		//Preprocess articles (remove stopwords, stemming, etc.), giving a dataset of cleaned articles
 		PreprocessArticle preprocessArticleMap = new PreprocessArticle();
 		Dataset<CleanedArticle> cleanedArticles = news.map(preprocessArticleMap, Encoders.bean(CleanedArticle.class));
 		
+		//Find the lengths of each document
 		DocLengthMap docLenMap = new DocLengthMap();
 		Dataset<Integer> docLens = cleanedArticles.map(docLenMap, Encoders.INT());
 		
+		//Use the total length of all documents and the number of documents to calculate the average document length
 		SumDocLengthReducer sumDocLength = new SumDocLengthReducer();
 		Integer totalDocLen = docLens.reduce(sumDocLength);
 		long docsCount = docLens.count();
-		
 		Double avgDocLen = ((double)totalDocLen)/ docsCount;
 	
+		//Calculate the document-term frequency across the entire corpus
 		DocTermsReducer docTermsReducer = new DocTermsReducer();
 		CleanedArticle corpus = cleanedArticles.reduce(docTermsReducer);
 		
+		//Broadcast queries and the corpus to be used in the document ranking function
 		List<Query> queriesList = queries.collectAsList();
 		Broadcast<List<Query>> broadcastQueries = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queriesList);
 		Broadcast<CleanedArticle> broadcastCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpus);
 		
+		//Rank each article with each query
 		RankFlatMap rankFlatMap = new RankFlatMap(broadcastQueries, broadcastCorpus, avgDocLen, docsCount);
 		Dataset<DocumentRanking> rankedDocs = cleanedArticles.flatMap(rankFlatMap, Encoders.bean(DocumentRanking.class));
-		KeyValueGroupedDataset<String,DocumentRanking> rankedDocsByQuery = rankedDocs.groupByKey(new DocumentRankingToQuery(), Encoders.STRING());
 		
+		//Group the resulting dataset by query and convert it to a dataset of tuple 2
+		KeyValueGroupedDataset<String,DocumentRanking> rankedDocsByQuery = rankedDocs.groupByKey(new DocumentRankingToQuery(), Encoders.STRING());
 		Dataset<Tuple2<String, DocumentRanking>> ranksByQuery = rankedDocsByQuery.reduceGroups(new MergeDocRankingReducer());
 		
 		
-		//Dataset holding the unfiltered document rankings
+		//Take only the document rankings from the tuple2, giving a dataset holding the unfiltered document rankings
 		Dataset<DocumentRanking> ranks = ranksByQuery.map(new QueryDocRankTupleToDocRank(), Encoders.bean(DocumentRanking.class));
 		
 		//Sort results in each DocumentRanking based on score with a 20 article limit, then remove redundant results with a 10 article limit
@@ -150,7 +149,14 @@ public class AssessedExercise {
 		
 		List<DocumentRanking> reducedRanksList = reducedRanks.collectAsList();
 		
-		return reducedRanksList; // replace this with the the list of DocumentRanking output by your topology
+		try {
+			Thread.sleep(999999999);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return reducedRanksList; // return final result
 	}
 	
 	

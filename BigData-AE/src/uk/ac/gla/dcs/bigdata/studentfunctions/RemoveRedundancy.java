@@ -28,6 +28,7 @@ public class RemoveRedundancy implements MapFunction<DocumentRanking, DocumentRa
 
 	@Override
     public DocumentRanking call(DocumentRanking documentRanking) throws Exception {
+		//sort rankings based on score, and keep only the best 20, as it is unlikely that there will be more than 10 discarded
         List<RankedResult> sortedResults = documentRanking.getResults().stream()
                 .sorted((result1, result2) -> Double.compare(result2.getScore(), (result1.getScore())))
                 .limit(20)
@@ -35,6 +36,7 @@ public class RemoveRedundancy implements MapFunction<DocumentRanking, DocumentRa
         
         List<RankedResult> filteredResults = new ArrayList<>();
         
+        //check each article title against all other ones
         for (int i = 0; i < sortedResults.size(); i++) {
             boolean keep = true;
             RankedResult result1 = sortedResults.get(i);
@@ -46,8 +48,9 @@ public class RemoveRedundancy implements MapFunction<DocumentRanking, DocumentRa
 	                if ( title2 == null ) {
 	                	continue;
 	                }
-	                
+	                //check similarity between titles
 	                if (TextDistanceCalculator.similarity(title1, title2) < 0.5) {
+	                	//if similar enough, discard result1, which is being tested
 	                    if (result1.getScore() < result2.getScore()) {
 	                        keep = false;
 	                        break;
@@ -55,11 +58,13 @@ public class RemoveRedundancy implements MapFunction<DocumentRanking, DocumentRa
 	                }
 	            }
             }
+            //if not too similar, keep result1
             if (keep) {
                 filteredResults.add(result1);
             }
         }
-
+        
+        //return the 10 best results
         return new DocumentRanking(documentRanking.getQuery(), filteredResults.stream().limit(10).collect(Collectors.toList()));
     }
 }
