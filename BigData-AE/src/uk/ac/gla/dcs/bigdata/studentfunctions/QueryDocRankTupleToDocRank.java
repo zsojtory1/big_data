@@ -5,6 +5,10 @@ import org.apache.spark.api.java.function.MapFunction;
 import scala.Tuple2;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 
+/**
+ * @author zoltan
+ * Map function, mapping a Tuple2<String, DocumentRanking> to just its second element which is Document Ranking
+ */
 public class QueryDocRankTupleToDocRank implements MapFunction<Tuple2<String,DocumentRanking>, DocumentRanking>{
 	
 	private static final long serialVersionUID = 6475166483071609772L;

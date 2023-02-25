@@ -6,6 +6,10 @@ import java.util.Map;
 import org.apache.spark.api.java.function.ReduceFunction;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
 
+/**
+ * @author zoltan
+ * Take all the document-term frequencies of each article and combine them to create the document-term frequency map of the entire corpus
+ */
 public class DocTermsReducer implements ReduceFunction<CleanedArticle> {
 	
 	private static final long serialVersionUID = 6475166483071609772L;
