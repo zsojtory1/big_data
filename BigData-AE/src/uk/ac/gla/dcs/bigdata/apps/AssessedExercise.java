@@ -62,7 +62,7 @@ public class AssessedExercise {
 		
 		// Get the location of the input news articles
 		String newsFile = System.getenv("bigdata.news");
-		if (newsFile==null) newsFile = "data/1000.json"; // default is a sample of 5000 news articles
+		if (newsFile==null) newsFile = "data/10000.json"; // default is a sample of 5000 news articles
 		
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
