@@ -149,13 +149,6 @@ public class AssessedExercise {
 		
 		List<DocumentRanking> reducedRanksList = reducedRanks.collectAsList();
 		
-		try {
-			Thread.sleep(999999999);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		return reducedRanksList; // return final result
 	}
 	
