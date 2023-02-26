@@ -24,7 +24,6 @@ public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRank
 	private static final long serialVersionUID = 6475166483071609772L;
 	
 	Broadcast<List<Query>> broadcastQueries;
-	Broadcast<DPHScorer> broadcastScorer;
 	Broadcast<CleanedArticle> broadcastCorpus;
 	Double avgDocLen;
 	long docCount;
