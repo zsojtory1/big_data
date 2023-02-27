@@ -20,6 +20,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.studentfunctions.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
+import uk.ac.gla.dcs.bigdata.studentstructures.HashMapAccumulator;
 /**
  * This is the main class where your Spark topology should be specified.
  * 
@@ -62,7 +63,7 @@ public class AssessedExercise {
 		
 		// Get the location of the input news articles
 		String newsFile = System.getenv("bigdata.news");
-		if (newsFile==null) newsFile = "data/10000.json"; // default is a sample of 5000 news articles
+		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
 		
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
@@ -106,8 +107,11 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 		
+		HashMapAccumulator corpusCounter = new HashMapAccumulator();
+		spark.sparkContext().register(corpusCounter, "corpus");
+		
 		//Preprocess articles (remove stopwords, stemming, etc.), giving a dataset of cleaned articles
-		PreprocessArticle preprocessArticleMap = new PreprocessArticle();
+		PreprocessArticle preprocessArticleMap = new PreprocessArticle(corpusCounter);
 		Dataset<CleanedArticle> cleanedArticles = news.map(preprocessArticleMap, Encoders.bean(CleanedArticle.class));
 		
 		//Find the lengths of each document
@@ -121,13 +125,13 @@ public class AssessedExercise {
 		Double avgDocLen = ((double)totalDocLen)/ docsCount;
 	
 		//Calculate the document-term frequency across the entire corpus
-		DocTermsReducer docTermsReducer = new DocTermsReducer();
-		CleanedArticle corpus = cleanedArticles.reduce(docTermsReducer);
+		//DocTermsReducer docTermsReducer = new DocTermsReducer();
+		//CleanedArticle corpus = cleanedArticles.reduce(docTermsReducer);
 		
 		//Broadcast queries and the corpus to be used in the document ranking function
 		List<Query> queriesList = queries.collectAsList();
 		Broadcast<List<Query>> broadcastQueries = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queriesList);
-		Broadcast<CleanedArticle> broadcastCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpus);
+		Broadcast<HashMapAccumulator> broadcastCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpusCounter);
 		
 		//Rank each article with each query
 		RankFlatMap rankFlatMap = new RankFlatMap(broadcastQueries, broadcastCorpus, avgDocLen, docsCount);

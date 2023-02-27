@@ -9,6 +9,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
+import uk.ac.gla.dcs.bigdata.studentstructures.HashMapAccumulator;
 
 /**
  * @author zoltan
@@ -18,9 +19,11 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 
 	private static final long serialVersionUID = 6475166483071609772L;
 	private transient TextPreProcessor processor;
+	private HashMapAccumulator acc;
 		
-	public PreprocessArticle() {
+	public PreprocessArticle(HashMapAccumulator acc) {
 		this.processor = new TextPreProcessor();
+		this.acc = acc;
 	}
 	
 	@Override
@@ -57,6 +60,7 @@ public class PreprocessArticle implements MapFunction<NewsArticle, CleanedArticl
 		Map<String,Short> termsMap = new HashMap<>();
 		for(String term: terms) {
 			termsMap.merge(term, (short) 1, (a, b) -> (short) (a + b));
+			acc.add(term);
 		}
 		
 		CleanedArticle cleanedArticle = new CleanedArticle(article, termsMap);
