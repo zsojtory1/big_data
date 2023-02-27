@@ -14,6 +14,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
+import uk.ac.gla.dcs.bigdata.studentstructures.HashMapAccumulator;
 
 /**
  * @author zoltan
@@ -24,13 +25,13 @@ public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRank
 	private static final long serialVersionUID = 6475166483071609772L;
 	
 	Broadcast<List<Query>> broadcastQueries;
-	Broadcast<CleanedArticle> broadcastCorpus;
+	Broadcast<HashMapAccumulator> broadcastCorpus;
 	Double avgDocLen;
 	long docCount;
 	
 	public RankFlatMap(
 			Broadcast<List<Query>> broadcastQueries, 
-			Broadcast<CleanedArticle> broadcastCorpus, 
+			Broadcast<HashMapAccumulator> broadcastCorpus, 
 			Double avgDocLen,
 			long docsCount
 			) {
@@ -44,9 +45,9 @@ public class RankFlatMap implements FlatMapFunction<CleanedArticle, DocumentRank
 	public Iterator<DocumentRanking> call(CleanedArticle cleanedArticle) throws Exception {
 		
 		List<Query> queries = this.broadcastQueries.value();
-		CleanedArticle corpus = this.broadcastCorpus.value();
+		HashMapAccumulator corpus = this.broadcastCorpus.value();
 		
-		Map<String,Short> corpusTermDict = corpus.getTerms();
+		Map<String,Integer> corpusTermDict = corpus.value();
 		Map<String,Short> docTermDict = cleanedArticle.getTerms();
 		
 		//create a list of rankings (one for each query)
