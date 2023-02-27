@@ -20,7 +20,10 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.studentfunctions.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.CleanedArticle;
+<<<<<<< BigData-AE/src/uk/ac/gla/dcs/bigdata/apps/AssessedExercise.java
 import uk.ac.gla.dcs.bigdata.studentstructures.HashMapAccumulator;
+=======
+>>>>>>> BigData-AE/src/uk/ac/gla/dcs/bigdata/apps/AssessedExercise.java
 /**
  * This is the main class where your Spark topology should be specified.
  * 
@@ -63,7 +66,7 @@ public class AssessedExercise {
 		
 		// Get the location of the input news articles
 		String newsFile = System.getenv("bigdata.news");
-		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+		if (newsFile==null) newsFile = "data/10000.json"; // default is a sample of 5000 news articles
 		
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
@@ -107,12 +110,17 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 		
+<<<<<<< BigData-AE/src/uk/ac/gla/dcs/bigdata/apps/AssessedExercise.java
 		//Custom accumulator for counting document-term frequencies across the corpus
 		HashMapAccumulator corpusCounter = new HashMapAccumulator();
 		spark.sparkContext().register(corpusCounter);
 		
 		//Preprocess articles (remove stopwords, stemming, etc.), giving a dataset of cleaned articles
 		PreprocessArticle preprocessArticleMap = new PreprocessArticle(corpusCounter);
+=======
+		//Preprocess articles (remove stopwords, stemming, etc.), giving a dataset of cleaned articles
+		PreprocessArticle preprocessArticleMap = new PreprocessArticle();
+>>>>>>> BigData-AE/src/uk/ac/gla/dcs/bigdata/apps/AssessedExercise.java
 		Dataset<CleanedArticle> cleanedArticles = news.map(preprocessArticleMap, Encoders.bean(CleanedArticle.class));
 		
 		//Find the lengths of each document
@@ -124,11 +132,22 @@ public class AssessedExercise {
 		Integer totalDocLen = docLens.reduce(sumDocLength);
 		long docsCount = docLens.count();
 		Double avgDocLen = ((double)totalDocLen)/ docsCount;
+<<<<<<< BigData-AE/src/uk/ac/gla/dcs/bigdata/apps/AssessedExercise.java
+=======
+	
+		//Calculate the document-term frequency across the entire corpus
+		DocTermsReducer docTermsReducer = new DocTermsReducer();
+		CleanedArticle corpus = cleanedArticles.reduce(docTermsReducer);
+>>>>>>> BigData-AE/src/uk/ac/gla/dcs/bigdata/apps/AssessedExercise.java
 		
 		//Broadcast queries and the corpus to be used in the document ranking function
 		List<Query> queriesList = queries.collectAsList();
 		Broadcast<List<Query>> broadcastQueries = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queriesList);
+<<<<<<< BigData-AE/src/uk/ac/gla/dcs/bigdata/apps/AssessedExercise.java
 		Broadcast<HashMapAccumulator> broadcastCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpusCounter);
+=======
+		Broadcast<CleanedArticle> broadcastCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpus);
+>>>>>>> BigData-AE/src/uk/ac/gla/dcs/bigdata/apps/AssessedExercise.java
 		
 		//Rank each article with each query
 		RankFlatMap rankFlatMap = new RankFlatMap(broadcastQueries, broadcastCorpus, avgDocLen, docsCount);
