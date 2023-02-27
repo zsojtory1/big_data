@@ -107,8 +107,9 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 		
+		//Custom accumulator for counting document-term frequencies across the corpus
 		HashMapAccumulator corpusCounter = new HashMapAccumulator();
-		spark.sparkContext().register(corpusCounter, "corpus");
+		spark.sparkContext().register(corpusCounter);
 		
 		//Preprocess articles (remove stopwords, stemming, etc.), giving a dataset of cleaned articles
 		PreprocessArticle preprocessArticleMap = new PreprocessArticle(corpusCounter);
@@ -123,10 +124,6 @@ public class AssessedExercise {
 		Integer totalDocLen = docLens.reduce(sumDocLength);
 		long docsCount = docLens.count();
 		Double avgDocLen = ((double)totalDocLen)/ docsCount;
-	
-		//Calculate the document-term frequency across the entire corpus
-		//DocTermsReducer docTermsReducer = new DocTermsReducer();
-		//CleanedArticle corpus = cleanedArticles.reduce(docTermsReducer);
 		
 		//Broadcast queries and the corpus to be used in the document ranking function
 		List<Query> queriesList = queries.collectAsList();
